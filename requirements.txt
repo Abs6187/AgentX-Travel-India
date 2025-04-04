@@ -1,0 +1,10 @@
+streamlit==1.32.2
+langchain_google_genai==0.0.10
+google-generativeai==0.3.2
+pandas==2.1.4
+geopy==2.4.1
+pydeck==0.8.0
+
+# Optional dependencies for MongoDB integration
+pymongo>=4.3.3  # Optional - for MongoDB integration
+openai>=1.3.0   # Optional - for vector embeddings
