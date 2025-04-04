@@ -10,7 +10,7 @@ pinned: false
 short_description: LLM + Langchain Travel Planner for India
 ---
 
-<!-- # AgentX Travel India
+# AgentX Travel India
 
 A smart travel itinerary planner built by TechMatrix Solvers for IIITDMJ HackByte3.0. This application leverages AI to create personalized travel itineraries for destinations across India.
 
@@ -150,4 +150,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - MongoDB for the geo-spatial and vector search capabilities
 - The open-source community for the incredible tools that made this project possible
 
-Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference -->
+Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference 
