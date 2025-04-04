@@ -26,6 +26,8 @@ This application is deployed on Hugging Face Spaces:
 4. Github
 5. Postman testing
 
+![Tracks_Followed_HackByte3_0](Tracks_followed_HackByte3.png)
+
 ##  Features
 
 - **AI-Powered Itinerary Generation**: Create detailed day-by-day travel plans customized to your preferences
