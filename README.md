@@ -10,7 +10,7 @@ pinned: false
 short_description: LLM + Langchain Travel Planner for India
 ---
 
-# AgentX Travel India
+# AgentX Travel India v0
 
 A smart travel itinerary planner built by TechMatrix Solvers for IIITDMJ HackByte3.0. This application leverages AI to create personalized travel itineraries for destinations across India.
 
