@@ -19,7 +19,14 @@ This application is deployed on Hugging Face Spaces:
 - [AgentX-Travel-India](https://huggingface.co/spaces/Abs6187/AgentX-Travel-India) - Latest version
 - [AgentX-Travel-India_v01](https://huggingface.co/spaces/Abs6187/AgentX-Travel-India_v01) - Development version
 
-## 🌟 Features
+## Tracks Followed in Hackathon HackByte 3.0:
+1. Gemini API
+2. MongoDB Atlas API
+3. Cloudflare AI SDK/ HuggingFace
+4. Github
+5. Postman testing
+
+##  Features
 
 - **AI-Powered Itinerary Generation**: Create detailed day-by-day travel plans customized to your preferences
 - **Multi-Agent System**: Specialized AI agents for research, accommodation, transportation, activities, dining, and itinerary integration
@@ -30,7 +37,7 @@ This application is deployed on Hugging Face Spaces:
 - **Responsive Design**: Works seamlessly across desktop and mobile devices
 - **Downloadable Itineraries**: Save your travel plans offline for easy access
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 - Python 3.8+
