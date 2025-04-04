@@ -9,10 +9,15 @@ app_file: app.py
 pinned: false
 short_description: LLM + Langchain Travel Planner for India
 ---
-
 # AgentX Travel India v0
 
 A smart travel itinerary planner built by TechMatrix Solvers for IIITDMJ HackByte3.0. This application leverages AI to create personalized travel itineraries for destinations across India.
+
+## 🚀 Deployment
+
+This application is deployed on Hugging Face Spaces:
+- [AgentX-Travel-India](https://huggingface.co/spaces/Abs6187/AgentX-Travel-India) - Latest version
+- [AgentX-Travel-India_v01](https://huggingface.co/spaces/Abs6187/AgentX-Travel-India_v01) - Development version
 
 ## 🌟 Features
 
@@ -88,28 +93,27 @@ If you have a MongoDB Atlas account, you can:
 - Initialize a sample dataset with Indian attractions
 - Search for attractions near your destination based on your interests
 
-## 👥 Team Members
+## 📊 Architecture Evolution
 
-This project was created by TechMatrix Solvers for IIITDMJ HackByte3.0 (April 4-6, 2024):
+Our project architecture has evolved through multiple versions:
 
-- **Team Leader**: Abhay Gupta ([LinkedIn](https://www.linkedin.com/in/abhay-gupta-197b17264/))
-- Jay Kumar ([LinkedIn](https://www.linkedin.com/in/jay-kumar-jk/))
-- Kripanshu Gupta ([LinkedIn](https://www.linkedin.com/in/kripanshu-gupta-a66349261/))
-- Aditi Soni ([LinkedIn](https://www.linkedin.com/in/aditi-soni-259813285/))
+### Initial Architecture (v0)
+![Architecture v0](Architecture_of_travel_planner_v0.png)
+*Initial design with basic AI agent integration*
 
-## 🛠️ Technology Stack
+### Hackathon Implementation (v0.1)
+![Architecture v0.1](Architecture_of_travel_planner_v0.1.png)
+*Enhanced architecture implemented during the hackathon with improved agent communication*
 
-- **Frontend**: Streamlit 1.32.2
-- **AI Framework**: LangChain with Google Genai 0.0.10
-- **Language Model**: Google Generative AI (Gemini) 0.3.2
-- **Geolocation**: Geopy 2.4.1
-- **Visualization**: Pydeck 0.8.0
-- **Data Processing**: Pandas 2.1.4
-- **Optional**: MongoDB for geo-based recommendations
-- **Optional**: OpenAI for vector embeddings
-- **Optional**: Tailvy API for enhanced travel planning
+### Advanced Implementation (v1)
+![Architecture v1](Architecture_of_travel_planner_v1.png)
+*Advanced version with additional data sources and optimized workflows*
 
-## 📊 Project Architecture
+### Future Vision (v2) - Beyond Hackathon Scope
+![Architecture v2](Architecture_of_travel_planner_v2.png)
+*Planned future architecture with expanded capabilities and integrations*
+
+## 📊 Current Project Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -139,6 +143,27 @@ This project was created by TechMatrix Solvers for IIITDMJ HackByte3.0 (April 4-
 
 The application follows a multi-agent architecture where specialized AI agents handle different aspects of travel planning. These agents work collaboratively to create a comprehensive travel itinerary tailored to the user's preferences.
 
+## 👥 Team Members
+
+This project was created by TechMatrix Solvers for IIITDMJ HackByte3.0 (April 4-6, 2024):
+
+- **Team Leader**: Abhay Gupta ([LinkedIn](https://www.linkedin.com/in/abhay-gupta-197b17264/))
+- Jay Kumar ([LinkedIn](https://www.linkedin.com/in/jay-kumar-jk/))
+- Kripanshu Gupta ([LinkedIn](https://www.linkedin.com/in/kripanshu-gupta-a66349261/))
+- Aditi Soni ([LinkedIn](https://www.linkedin.com/in/aditi-soni-259813285/))
+
+## 🛠️ Technology Stack
+
+- **Frontend**: Streamlit 1.32.2
+- **AI Framework**: LangChain with Google Genai 0.0.10
+- **Language Model**: Google Generative AI (Gemini) 0.3.2
+- **Geolocation**: Geopy 2.4.1
+- **Visualization**: Pydeck 0.8.0
+- **Data Processing**: Pandas 2.1.4
+- **Optional**: MongoDB for geo-based recommendations
+- **Optional**: OpenAI for vector embeddings
+- **Optional**: Tailvy API for enhanced travel planning
+
 ## 📝 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
@@ -150,4 +175,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - MongoDB for the geo-spatial and vector search capabilities
 - The open-source community for the incredible tools that made this project possible
 
-Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference 
+Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
