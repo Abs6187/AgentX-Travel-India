@@ -2,8 +2,6 @@ name: Sync to Hugging Face hub
 on:
   push:
     branches: [main]
-
-  # to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
@@ -17,4 +15,9 @@ jobs:
       - name: Push to hub
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: git push --force https://Abs6187:$HF_TOKEN@huggingface.co/spaces/Abs6187/AgentX-Travel-India_v01 main
+        run: |
+          git push --force https://Abs6187:$HF_TOKEN@huggingface.co/spaces/Abs6187/AgentX-Travel-India_v01 main || {
+            echo "Retrying push after failure"
+            sleep 5
+            git push --force https://Abs6187:$HF_TOKEN@huggingface.co/spaces/Abs6187/AgentX-Travel-India_v01 main
+          }
