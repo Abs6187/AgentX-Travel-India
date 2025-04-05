@@ -51,7 +51,7 @@ This application is deployed on Hugging Face Spaces:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/agentx-travel-india.git
+git clone https://github.com/Abs6187/agentx-travel-india.git
 cd agentx-travel-india
 
 # Install dependencies
