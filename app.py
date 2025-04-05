@@ -149,6 +149,14 @@ custom_css = """
 
 st.markdown(custom_css, unsafe_allow_html=True)
 
+# Add logo to the header
+logo_col1, logo_col2 = st.columns([1, 4])
+with logo_col1:
+    st.image("android-chrome-512x512.png", width=100)
+with logo_col2:
+    st.markdown("## " + t("page_title"))
+    st.markdown("##### AI-powered travel assistant for India")
+
 # ------------------------------------------
 # Translation dictionary and helper functions
 # ------------------------------------------
