@@ -9,6 +9,9 @@ app_file: app.py
 pinned: false
 short_description: LLM + Langchain Travel Planner for India
 ---
+<p align="center">
+  <img src="android-chrome-512x512.png" alt="AgentX Logo" width="150"/>
+</p>
 # AgentX Travel India v0
 
 A smart travel itinerary planner built by TechMatrix Solvers for IIITDMJ HackByte3.0. This application leverages AI to create personalized travel itineraries for destinations across India.
