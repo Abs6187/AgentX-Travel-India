@@ -176,9 +176,6 @@ This project was created by TechMatrix Solvers for IIITDMJ HackByte3.0 (April 4-
 - **Optional**: OpenAI for vector embeddings
 - **Optional**: Tailvy API for enhanced travel planning
 
-## 📝 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 🙏 Acknowledgements
 
