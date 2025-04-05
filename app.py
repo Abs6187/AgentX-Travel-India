@@ -2,7 +2,7 @@
 # AgentX-Travel India
 # ------------------
 # An AI-powered travel assistant application tailored for the Indian market
-# Created by TechMatrix Solvers for IIITDMJ HackByte3.0 (April 4-6, 2024)
+# Created by TechMatrix Solvers for IIITDMJ HackByte3.0 (April 4-6, 2025)
 #
 # Features:
 # - Personalized travel itinerary generation using AI agents
@@ -25,33 +25,76 @@
 # - Pydeck for map visualizations
 """
 
-import streamlit as st
 import os
-import json
-from datetime import datetime, timedelta
-import base64
-import pandas as pd
-import pydeck as pdk
-import requests
-from travel import (
-    destination_research_task, accommodation_task, transportation_task,
-    activities_task, dining_task, itinerary_task, chatbot_task,
-    run_task
-)
-from geopy.geocoders import Nominatim
-try:
-    from pymongo import MongoClient
-    from bson import ObjectId
-    MONGODB_AVAILABLE = True
-except ImportError:
-    MONGODB_AVAILABLE = False
-    
-try:
-    from openai import OpenAI
-    OPENAI_AVAILABLE = True
-except ImportError:
-    OPENAI_AVAILABLE = False
+import sys
 
+# Initialize MongoDB, OpenAI and MCP availability flags as False by default
+# These will be set to True only if the imports succeed
+MONGODB_AVAILABLE = False
+OPENAI_AVAILABLE = False
+MCP_AVAILABLE = False
+
+# Debugging information for deployment troubleshooting
+print("Python version:", sys.version)
+print("Working directory:", os.getcwd())
+print("Directory contents:", os.listdir())
+print("Environment variables:", [(k, v) for k, v in os.environ.items() if 'SECRET' not in k.upper()])
+
+try:
+    import streamlit as st
+    print("Streamlit version:", st.__version__)
+except Exception as e:
+    print(f"Error importing streamlit: {str(e)}")
+    sys.exit(1)  # Exit if Streamlit isn't available - it's required
+
+# Continue with the rest of the imports
+try:
+    import json
+    from datetime import datetime, timedelta
+    import base64
+    import pandas as pd
+    import pydeck as pdk
+    import requests
+    from travel import (
+        destination_research_task, accommodation_task, transportation_task,
+        activities_task, dining_task, itinerary_task, chatbot_task,
+        run_task
+    )
+    from geopy.geocoders import Nominatim
+    
+    # Try to import MongoDB modules - but make them optional
+    try:
+        from pymongo import MongoClient
+        from bson import ObjectId
+        MONGODB_AVAILABLE = True
+        print("MongoDB integration available")
+    except ImportError:
+        MONGODB_AVAILABLE = False
+        print("MongoDB integration not available")
+        
+    # Try to import OpenAI module - but make it optional
+    try:
+        from openai import OpenAI
+        OPENAI_AVAILABLE = True
+        print("OpenAI integration available")
+    except ImportError:
+        OPENAI_AVAILABLE = False
+        print("OpenAI integration not available")
+        
+    # Try to import MCP module - but make it optional
+    try:
+        from mcp.client import ClientSession, WebSocketServerParameters
+        import mcp.types as mcp_types
+        import asyncio
+        MCP_AVAILABLE = True
+        print("MCP integration available")
+    except ImportError:
+        MCP_AVAILABLE = False
+        print("MCP integration not available")
+        
+except Exception as e:
+    print(f"Error during imports: {str(e)}")
+    # Don't exit here - we'll handle missing dependencies gracefully
 
 st.set_page_config(
     page_title="Your AI Travel Assistant",
@@ -609,7 +652,45 @@ with st.sidebar:
     else:
         st.caption("💡 Using Tailvy API provides better recommendations for Indian destinations with local expertise.")
     
-    # Add MongoDB and OpenAI integration (optional)
+    # Add MCP integration section ONLY if the modules are available
+    if MCP_AVAILABLE:
+        st.markdown("### 🧠 Model Context Protocol (Optional)")
+        
+        mcp_server_url = st.text_input(
+            "MCP Server URL",
+            placeholder="ws://localhost:3000",
+            help="Optional: Connect to an MCP server for enhanced context-aware responses"
+        )
+        
+        # Save MCP server URL to session state
+        if mcp_server_url:
+            st.session_state.mcp_server_url = mcp_server_url
+            st.success("MCP server URL saved!")
+            
+            # Add option to test MCP connection
+            if st.button("Test MCP Connection"):
+                with st.spinner("Testing MCP connection..."):
+                    connection_successful = test_mcp_connection(mcp_server_url)
+                    if connection_successful:
+                        st.session_state.mcp_connected = True
+                        st.success("Successfully connected to MCP server!")
+                    else:
+                        st.session_state.mcp_connected = False
+                        st.error("Failed to connect to MCP server. Please check the URL and ensure the server is running.")
+            
+            if st.session_state.get("mcp_connected", False):
+                st.info("MCP integration is active! You'll receive context-aware travel recommendations.")
+    else:
+        st.markdown("### 🧠 Model Context Protocol (Installation Required)")
+        st.warning("""
+        To enable context-aware AI with the Model Context Protocol, please install:
+        ```
+        pip install mcp-python-sdk
+        ```
+        Then restart the application to access this feature.
+        """)
+    
+    # Add MongoDB and OpenAI integration section ONLY if the modules are available
     if MONGODB_AVAILABLE and OPENAI_AVAILABLE:
         st.markdown("### 🗺️ MongoDB Geo Search (Optional)")
         
@@ -640,6 +721,24 @@ with st.sidebar:
                     initialize_mongodb_collection()
             else:
                 st.warning("Please provide an OpenAI API key for vector search functionality.")
+    elif not MONGODB_AVAILABLE:
+        st.markdown("### 🗺️ MongoDB Geo Search (Installation Required)")
+        st.warning("""
+        To enable geo-based attraction search, please install:
+        ```
+        pip install pymongo openai
+        ```
+        Then restart the application to access this feature.
+        """)
+    elif not OPENAI_AVAILABLE:
+        st.markdown("### 🗺️ MongoDB Geo Search (Installation Required)")
+        st.warning("""
+        To enable geo-based attraction search, please install:
+        ```
+        pip install openai
+        ```
+        Then restart the application to access this feature.
+        """)
     
     # About section
     st.markdown("### ℹ️ " + t("about"))
@@ -655,7 +754,19 @@ with st.sidebar:
         "transportation, activities, dining, and itinerary creation."
     )
 
-# Add a check for MongoDB availability when app starts
+# Show notification for MCP if unavailable
+if not MCP_AVAILABLE:
+    # Add notification about optional MCP features
+    st.sidebar.markdown("""
+    <div style="padding: 10px; border-radius: 5px; margin-bottom: 10px; background-color: #f8f9fa; border-left: 3px solid #3366cc;">
+        <b>ℹ️ Optional Feature Unavailable</b><br>
+        Model Context Protocol integration is unavailable because the required packages are not installed.
+        <code>pip install mcp-python-sdk</code> to enable this feature.
+    </div>
+    """, unsafe_allow_html=True)
+
+# Don't check again - these variables are already defined at the top of the script
+# Just show a notification based on their values
 if not MONGODB_AVAILABLE or not OPENAI_AVAILABLE:
     # Add notification at the top of the app about optional MongoDB features
     st.sidebar.markdown("""
@@ -934,7 +1045,8 @@ with tabs[3]:
     
     # Add search options for MongoDB geo search if available
     mongo_results = None
-    if MONGODB_AVAILABLE and OPENAI_AVAILABLE and st.session_state.mongodb_uri and st.session_state.openai_api_key:
+    # Make sure to check the variables that are now guaranteed to be defined
+    if MONGODB_AVAILABLE and OPENAI_AVAILABLE and st.session_state.get("mongodb_uri", "") and st.session_state.get("openai_api_key", ""):
         st.markdown('<div class="output-container">', unsafe_allow_html=True)
         st.markdown('<h4 class="output-text">Find Nearby Attractions</h4>', unsafe_allow_html=True)
         
@@ -946,13 +1058,14 @@ with tabs[3]:
         if st.button("Search"):
             with st.spinner("Searching for nearby attractions..."):
                 mongo_results = find_nearby_attractions(destination, search_term, radius)
-                if mongo_results and mongo_results["count"] > 0:
+                if mongo_results and mongo_results.get("count", 0) > 0:
                     st.session_state.mongodb_used = True
                     st.success(f"Found {mongo_results['count']} attractions near {destination}!")
                 else:
                     st.warning(f"No attractions found for '{search_term}' near {destination}.")
         
         st.markdown('</div>', unsafe_allow_html=True)
+    # Simple UI message when MongoDB modules are available but not configured
     elif MONGODB_AVAILABLE and OPENAI_AVAILABLE:
         st.info("""
         ℹ️ **MongoDB Geo Search Available**
@@ -963,6 +1076,7 @@ with tabs[3]:
         
         Configure these in the settings panel to search for attractions near your destination.
         """)
+    # Clear message about package installation when modules aren't available
     else:
         st.info("""
         ℹ️ **MongoDB Geo Search (Optional Feature)**
@@ -1094,6 +1208,18 @@ with tabs[3]:
 with tabs[4]:
     st.markdown('<h3 class="output-text">AI Travel Assistant</h3>', unsafe_allow_html=True)
     
+    # Display MCP badge if connected
+    if MCP_AVAILABLE and st.session_state.get("mcp_connected", False):
+        st.markdown(
+            """
+            <div style="display: inline-block; background-color: #3366cc; color: white; 
+            padding: 5px 10px; border-radius: 15px; margin-bottom: 10px; font-size: 0.8rem;">
+                🧠 Enhanced with Model Context Protocol
+            </div>
+            """, 
+            unsafe_allow_html=True
+        )
+    
     # Store conversation history in session state (message, sender, timestamp)
     if "messages" not in st.session_state:
         st.session_state.messages = []
@@ -1112,15 +1238,27 @@ with tabs[4]:
             else:
                 context = f"Question: {user_question}"
             
-            # Try using Tailvy API first if available
+            # Try using MCP first if available and configured
+            mcp_response = None
+            mcp_used = False
+            if MCP_AVAILABLE and st.session_state.get("mcp_connected", False):
+                with st.spinner("Getting MCP response..."):
+                    mcp_response = get_chatbot_response_with_mcp(user_question, context)
+                    if mcp_response:
+                        mcp_used = True
+            
+            # Try using Tailvy API if MCP not available or failed
             tailvy_response = None
-            if 'tailvy_api_key' in st.session_state and st.session_state.tailvy_api_key:
+            tailvy_used = False
+            if not mcp_used and 'tailvy_api_key' in st.session_state and st.session_state.tailvy_api_key:
                 try:
                     tailvy_response = use_tailvy_api(
                         user_question, 
                         st.session_state.tailvy_api_key,
                         endpoint="chat"
                     )
+                    if tailvy_response:
+                        tailvy_used = True
                 except:
                     tailvy_response = None
             
@@ -1135,14 +1273,21 @@ with tabs[4]:
                                 import time
                                 time.sleep(0.01)
                     
-                    # Use Tailvy response if available, otherwise use Gemini
-                    if tailvy_response:
+                    # Use responses in order of preference: MCP → Tailvy → Gemini
+                    if mcp_used and mcp_response:
+                        response = mcp_response
+                        # Mark that MCP was used
+                        st.session_state.mcp_used = True
+                        st.session_state.tailvy_used = False
+                    elif tailvy_used and tailvy_response:
                         response = tailvy_response.get("response", "I couldn't find an answer to that question.")
                         # Mark that Tailvy was used
+                        st.session_state.mcp_used = False
                         st.session_state.tailvy_used = True
                     else:
                         response = run_task(chatbot_task, context, api_key=st.session_state.gemini_api_key)
-                        # Reset Tailvy used flag if not used
+                        # Reset usage flags
+                        st.session_state.mcp_used = False
                         st.session_state.tailvy_used = False
                     
                     now = datetime.now().strftime("%H:%M")
@@ -1150,18 +1295,27 @@ with tabs[4]:
                     st.session_state.messages.append({"text": response, "sender": "ai", "time": now})
                 except Exception as e:
                     st.error(f"Error: {str(e)}")
-                    st.info("Please check your API key and try again.")
+                    st.info("Please check your connections and try again.")
     
-    # Display conversation history (with timestamps, in a scrollable area)
+    # Display conversation history (with badges for response sources)
     chat_container = st.container()
     with chat_container:
-        for message in reversed(st.session_state.messages):
+        for idx, message in enumerate(reversed(st.session_state.messages)):
             is_user = message["sender"] == "user"
             message_class = "user-message" if is_user else "ai-message"
+            
+            # Add source badge for AI messages
+            source_badge = ""
+            if not is_user and idx > 0:  # Only for AI messages and when we have message pairs
+                if st.session_state.get("mcp_used", False) and (idx % 2 == 1):  # Check if this message pair used MCP
+                    source_badge = '<span style="background-color: #3366cc; color: white; border-radius: 10px; padding: 2px 5px; font-size: 0.7rem; margin-left: 5px;">MCP</span>'
+                elif st.session_state.get("tailvy_used", False) and (idx % 2 == 1):  # Check if this message pair used Tailvy
+                    source_badge = '<span style="background-color: #046A38; color: white; border-radius: 10px; padding: 2px 5px; font-size: 0.7rem; margin-left: 5px;">Tailvy</span>'
+            
             st.markdown(
                 f"""<div style="display: flex; justify-content: {'flex-end' if is_user else 'flex-start'}; margin-bottom: 10px;">
                     <div class="{message_class}" style="border-radius: 10px; padding: 10px; max-width: 80%;">
-                        <div style="font-size: 0.8rem; color: #888; margin-bottom: 5px;">{message["sender"].upper()} - {message["time"]}</div>
+                        <div style="font-size: 0.8rem; color: #888; margin-bottom: 5px;">{message["sender"].upper()} {source_badge} - {message["time"]}</div>
                         <div class="output-text">{message["text"]}</div>
                     </div>
                 </div>""",
@@ -1171,7 +1325,7 @@ with tabs[4]:
 st.markdown("""
 <div style="margin-top: 50px; text-align: center; padding: 20px; color: #6c757d; font-size: 0.8rem;">
     <p>""" + t("built_with") + """</p>
-    <p style="margin-top: 10px;">Created by TechMatrix Solvers for <a href="https://www.hackbyte.in/" target="_blank">IIITDMJ HackByte3.0</a> (April 2024)</p>
+    <p style="margin-top: 10px;">Created by TechMatrix Solvers for <a href="https://www.hackbyte.in/" target="_blank">IIITDMJ HackByte3.0</a> (April 2025)</p>
     <div style="display: flex; justify-content: center; gap: 15px; margin-top: 10px;">
         <a href="https://www.linkedin.com/in/abhay-gupta-197b17264/" target="_blank" style="color: #0077B5;">Abhay</a>
         <a href="https://www.linkedin.com/in/jay-kumar-jk/" target="_blank" style="color: #0077B5;">Jay</a>
@@ -1180,3 +1334,114 @@ st.markdown("""
     </div>
 </div>
 """, unsafe_allow_html=True)
+
+# Add helper function for MCP connection
+def test_mcp_connection(server_url):
+    """
+    Test connection to MCP server
+    
+    Args:
+        server_url (str): WebSocket URL for the MCP server
+        
+    Returns:
+        bool: True if connection successful, False otherwise
+    """
+    if not MCP_AVAILABLE:
+        return False
+        
+    try:
+        # Create async function to test connection
+        async def test_connection():
+            try:
+                # Set up server parameters
+                server_params = WebSocketServerParameters(url=server_url)
+                
+                # Attempt connection with timeout
+                client = ClientSession.create(server_params)
+                await asyncio.wait_for(client.initialize(), timeout=5.0)
+                
+                # If we get here, connection was successful
+                await client.close()
+                return True
+            except Exception as e:
+                print(f"MCP connection error: {str(e)}")
+                return False
+                
+        # Run the async function
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        result = loop.run_until_complete(test_connection())
+        loop.close()
+        return result
+    except Exception as e:
+        print(f"Error testing MCP connection: {str(e)}")
+        return False
+
+# Add function to use MCP for chatbot responses when available
+def get_chatbot_response_with_mcp(question, context=None):
+    """
+    Get a chatbot response using MCP if available
+    
+    Args:
+        question (str): User question
+        context (str): Additional context
+        
+    Returns:
+        str: AI response
+    """
+    if not MCP_AVAILABLE or not st.session_state.get("mcp_connected", False):
+        # Fall back to regular method if MCP not available or not connected
+        return None
+        
+    try:
+        # Create async function to get response
+        async def get_response():
+            try:
+                # Connect to MCP server
+                server_params = WebSocketServerParameters(url=st.session_state.mcp_server_url)
+                async with ClientSession.create(server_params) as client:
+                    # Initialize connection
+                    await client.initialize()
+                    
+                    # List available tools
+                    tools = await client.list_tools()
+                    
+                    # Look for travel-related tools
+                    travel_tool = next((t for t in tools if "travel" in t.name.lower()), None)
+                    
+                    if travel_tool:
+                        # Call the travel tool with our question
+                        result = await client.call_tool(
+                            travel_tool.name,
+                            arguments={
+                                "question": question,
+                                "context": context or ""
+                            }
+                        )
+                        return result
+                    else:
+                        # If no specific travel tool, call a generic "echo" or similar tool
+                        # This is a fallback if the MCP server doesn't have travel-specific tools
+                        generic_tool = next((t for t in tools if "echo" in t.name.lower() or "chat" in t.name.lower()), None)
+                        if generic_tool:
+                            result = await client.call_tool(
+                                generic_tool.name,
+                                arguments={"message": f"Travel question: {question} Context: {context or ''}"}
+                            )
+                            return result
+                        
+                        # No suitable tools found
+                        return None
+            except Exception as e:
+                print(f"MCP response error: {str(e)}")
+                return None
+                
+        # Run the async function
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        result = loop.run_until_complete(get_response())
+        loop.close()
+        return result
+    except Exception as e:
+        print(f"Error getting MCP response: {str(e)}")
+        return None

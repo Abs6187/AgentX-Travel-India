@@ -1,6 +1,6 @@
 streamlit==1.32.2
-langchain_google_genai==0.0.10
-google-generativeai==0.3.2
+langchain_google_genai==0.0.11
+google-generativeai>=0.4.1,<0.5.0
 pandas==2.1.4
 geopy==2.4.1
 pydeck==0.8.0
