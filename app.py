@@ -149,14 +149,6 @@ custom_css = """
 
 st.markdown(custom_css, unsafe_allow_html=True)
 
-# Add logo to the header
-logo_col1, logo_col2 = st.columns([1, 4])
-with logo_col1:
-    st.image("android-chrome-512x512.png", width=100)
-with logo_col2:
-    st.markdown("## " + t("page_title"))
-    st.markdown("##### AI-powered travel assistant for India")
-
 # ------------------------------------------
 # Translation dictionary and helper functions
 # ------------------------------------------
@@ -214,6 +206,24 @@ translations = {
 
 def t(key):
     return translations["en"].get(key, key)
+
+# Add logo to the header
+logo_col1, logo_col2 = st.columns([1, 4])
+with logo_col1:
+    # Check if logo file exists before trying to load it
+    logo_path = os.path.join(os.path.dirname(__file__), "android-chrome-512x512.png")
+    if os.path.exists(logo_path):
+        try:
+            st.image(logo_path, width=100)
+        except Exception as e:
+            # If image fails to load, show emoji as fallback
+            st.markdown("# ✈️")
+    else:
+        # If image doesn't exist, show emoji as fallback
+        st.markdown("# ✈️")
+with logo_col2:
+    st.markdown("## " + t("page_title"))
+    st.markdown("##### AI-powered travel assistant for India")
 
 # ------------------------------------------
 # Initialize all session state variables
@@ -731,14 +741,17 @@ with st.sidebar:
             if st.session_state.get("mcp_connected", False):
                 st.info("MCP integration is active! You'll receive context-aware travel recommendations.")
     else:
-        st.markdown("### 🧠 Model Context Protocol (Installation Required)")
-        st.warning("""
-        To enable context-aware AI with the Model Context Protocol, please install:
-        ```
-        pip install mcp-python-sdk
-        ```
-        Then restart the application to access this feature.
-        """)
+        # Show collapsed expander for optional MCP feature
+        with st.expander("🧠 Model Context Protocol (Optional)", expanded=False):
+            st.caption("""
+            **Context-aware AI** - Enhance responses with Model Context Protocol
+
+            To enable this optional feature:
+            ```bash
+            pip install mcp-python-sdk
+            ```
+            Then restart the application.
+            """)
     
     # Add MongoDB and OpenAI integration section ONLY if the modules are available
     if MONGODB_AVAILABLE and OPENAI_AVAILABLE:
@@ -771,24 +784,24 @@ with st.sidebar:
                     initialize_mongodb_collection()
             else:
                 st.warning("Please provide an OpenAI API key for vector search functionality.")
-    elif not MONGODB_AVAILABLE:
-        st.markdown("### 🗺️ MongoDB Geo Search (Installation Required)")
-        st.warning("""
-        To enable geo-based attraction search, please install:
-        ```
-        pip install pymongo openai
-        ```
-        Then restart the application to access this feature.
-        """)
-    elif not OPENAI_AVAILABLE:
-        st.markdown("### 🗺️ MongoDB Geo Search (Installation Required)")
-        st.warning("""
-        To enable geo-based attraction search, please install:
-        ```
-        pip install openai
-        ```
-        Then restart the application to access this feature.
-        """)
+    else:
+        # Show collapsed expander for optional MongoDB feature
+        with st.expander("🗺️ MongoDB Geo Search (Optional)", expanded=False):
+            missing_packages = []
+            if not MONGODB_AVAILABLE:
+                missing_packages.append("pymongo")
+            if not OPENAI_AVAILABLE:
+                missing_packages.append("openai")
+
+            st.caption(f"""
+            **Location-based recommendations** - Find nearby attractions with MongoDB Atlas
+
+            To enable this optional feature:
+            ```bash
+            pip install {' '.join(missing_packages)}
+            ```
+            Then restart the application.
+            """)
     
     # About section
     st.markdown("### ℹ️ " + t("about"))
@@ -803,29 +816,6 @@ with st.sidebar:
         "Our AI system uses specialized agents for destination research, accommodations, "
         "transportation, activities, dining, and itinerary creation."
     )
-
-# Show notification for MCP if unavailable
-if not MCP_AVAILABLE:
-    # Add notification about optional MCP features
-    st.sidebar.markdown("""
-    <div style="padding: 10px; border-radius: 5px; margin-bottom: 10px; background-color: #f8f9fa; border-left: 3px solid #3366cc;">
-        <b>ℹ️ Optional Feature Unavailable</b><br>
-        Model Context Protocol integration is unavailable because the required packages are not installed.
-        <code>pip install mcp-python-sdk</code> to enable this feature.
-    </div>
-    """, unsafe_allow_html=True)
-
-# Don't check again - these variables are already defined at the top of the script
-# Just show a notification based on their values
-if not MONGODB_AVAILABLE or not OPENAI_AVAILABLE:
-    # Add notification at the top of the app about optional MongoDB features
-    st.sidebar.markdown("""
-    <div style="padding: 10px; border-radius: 5px; margin-bottom: 10px; background-color: #f8f9fa; border-left: 3px solid #046A38;">
-        <b>ℹ️ Optional Feature Unavailable</b><br>
-        MongoDB geo-based recommendations are unavailable because the required packages are not installed.
-        <code>pip install pymongo openai</code> to enable this feature.
-    </div>
-    """, unsafe_allow_html=True)
 
 # Add travel form
 st.markdown("## " + t("create_itinerary"))
@@ -1052,29 +1042,49 @@ with tabs[0]:
         if 'tailvy_api_key' in st.session_state and st.session_state.tailvy_api_key and 'tailvy_used' in st.session_state and st.session_state.tailvy_used:
             st.markdown(
                 """
-                <div style="display: inline-block; background-color: #046A38; color: white; 
+                <div style="display: inline-block; background-color: #046A38; color: white;
                 padding: 5px 10px; border-radius: 15px; margin-bottom: 10px; font-size: 0.8rem;">
                     ✨ Enhanced with Tailvy AI
                 </div>
-                """, 
+                """,
                 unsafe_allow_html=True
             )
-        
-        st.markdown('<div class="output-container"><div class="output-text">' + 
-                   st.session_state.generated_itinerary + '</div></div>', 
+
+        st.markdown('<div class="output-container"><div class="output-text">' +
+                   st.session_state.generated_itinerary + '</div></div>',
                    unsafe_allow_html=True)
+    else:
+        # Show message when no itinerary has been generated yet
+        st.info("👆 Fill out the form above and click '🚀 Create My Personal Travel Itinerary' to generate your customized travel plan!")
+        st.markdown("""
+        ### How it works:
+        1. **Enter your details** - Origin, destination, dates, and preferences
+        2. **Click Submit** - Our AI agents will research your destination
+        3. **Get your itinerary** - Personalized recommendations for accommodations, activities, dining, and more!
+
+        #### Powered by AI Agents:
+        - 🔍 Destination Research Agent
+        - 🏨 Accommodation Agent
+        - 🚗 Transportation Agent
+        - 🎯 Activities Agent
+        - 🍽️ Dining Agent
+        - 📋 Itinerary Integration Agent
+        """)
 
 # Details tab
 with tabs[1]:
-    if st.session_state.step_results.get("destination_research"):
-        st.markdown('<div class="output-container"><h3>🧭 Destination Information</h3><div class="output-text">' + 
-                    st.session_state.step_results["destination_research"] + '</div></div>', 
-                    unsafe_allow_html=True)
-    
-    if st.session_state.step_results.get("dining"):
-        st.markdown('<div class="output-container"><h3>🍽️ Dining Recommendations</h3><div class="output-text">' + 
-                    st.session_state.step_results["dining"] + '</div></div>', 
-                    unsafe_allow_html=True)
+    if st.session_state.step_results.get("destination_research") or st.session_state.step_results.get("dining"):
+        if st.session_state.step_results.get("destination_research"):
+            st.markdown('<div class="output-container"><h3>🧭 Destination Information</h3><div class="output-text">' +
+                        st.session_state.step_results["destination_research"] + '</div></div>',
+                        unsafe_allow_html=True)
+
+        if st.session_state.step_results.get("dining"):
+            st.markdown('<div class="output-container"><h3>🍽️ Dining Recommendations</h3><div class="output-text">' +
+                        st.session_state.step_results["dining"] + '</div></div>',
+                        unsafe_allow_html=True)
+    else:
+        st.info("Generate an itinerary to see detailed research about your destination and dining recommendations!")
 
 # Download and share tab
 with tabs[2]:
@@ -1085,6 +1095,8 @@ with tabs[2]:
         download_link = get_download_link(st.session_state.generated_itinerary, f"Travel_Itinerary_{destination.replace(' ', '_')}.txt")
         st.markdown(download_link, unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
+    else:
+        st.info("Generate an itinerary first to download it as a file!")
 
 # Maps and visualization tab
 with tabs[3]:
