@@ -1042,29 +1042,49 @@ with tabs[0]:
         if 'tailvy_api_key' in st.session_state and st.session_state.tailvy_api_key and 'tailvy_used' in st.session_state and st.session_state.tailvy_used:
             st.markdown(
                 """
-                <div style="display: inline-block; background-color: #046A38; color: white; 
+                <div style="display: inline-block; background-color: #046A38; color: white;
                 padding: 5px 10px; border-radius: 15px; margin-bottom: 10px; font-size: 0.8rem;">
                     ✨ Enhanced with Tailvy AI
                 </div>
-                """, 
+                """,
                 unsafe_allow_html=True
             )
-        
-        st.markdown('<div class="output-container"><div class="output-text">' + 
-                   st.session_state.generated_itinerary + '</div></div>', 
+
+        st.markdown('<div class="output-container"><div class="output-text">' +
+                   st.session_state.generated_itinerary + '</div></div>',
                    unsafe_allow_html=True)
+    else:
+        # Show message when no itinerary has been generated yet
+        st.info("👆 Fill out the form above and click '🚀 Create My Personal Travel Itinerary' to generate your customized travel plan!")
+        st.markdown("""
+        ### How it works:
+        1. **Enter your details** - Origin, destination, dates, and preferences
+        2. **Click Submit** - Our AI agents will research your destination
+        3. **Get your itinerary** - Personalized recommendations for accommodations, activities, dining, and more!
+
+        #### Powered by AI Agents:
+        - 🔍 Destination Research Agent
+        - 🏨 Accommodation Agent
+        - 🚗 Transportation Agent
+        - 🎯 Activities Agent
+        - 🍽️ Dining Agent
+        - 📋 Itinerary Integration Agent
+        """)
 
 # Details tab
 with tabs[1]:
-    if st.session_state.step_results.get("destination_research"):
-        st.markdown('<div class="output-container"><h3>🧭 Destination Information</h3><div class="output-text">' + 
-                    st.session_state.step_results["destination_research"] + '</div></div>', 
-                    unsafe_allow_html=True)
-    
-    if st.session_state.step_results.get("dining"):
-        st.markdown('<div class="output-container"><h3>🍽️ Dining Recommendations</h3><div class="output-text">' + 
-                    st.session_state.step_results["dining"] + '</div></div>', 
-                    unsafe_allow_html=True)
+    if st.session_state.step_results.get("destination_research") or st.session_state.step_results.get("dining"):
+        if st.session_state.step_results.get("destination_research"):
+            st.markdown('<div class="output-container"><h3>🧭 Destination Information</h3><div class="output-text">' +
+                        st.session_state.step_results["destination_research"] + '</div></div>',
+                        unsafe_allow_html=True)
+
+        if st.session_state.step_results.get("dining"):
+            st.markdown('<div class="output-container"><h3>🍽️ Dining Recommendations</h3><div class="output-text">' +
+                        st.session_state.step_results["dining"] + '</div></div>',
+                        unsafe_allow_html=True)
+    else:
+        st.info("Generate an itinerary to see detailed research about your destination and dining recommendations!")
 
 # Download and share tab
 with tabs[2]:
@@ -1075,6 +1095,8 @@ with tabs[2]:
         download_link = get_download_link(st.session_state.generated_itinerary, f"Travel_Itinerary_{destination.replace(' ', '_')}.txt")
         st.markdown(download_link, unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
+    else:
+        st.info("Generate an itinerary first to download it as a file!")
 
 # Maps and visualization tab
 with tabs[3]:
