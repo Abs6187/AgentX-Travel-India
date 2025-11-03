@@ -149,24 +149,6 @@ custom_css = """
 
 st.markdown(custom_css, unsafe_allow_html=True)
 
-# Add logo to the header
-logo_col1, logo_col2 = st.columns([1, 4])
-with logo_col1:
-    # Check if logo file exists before trying to load it
-    logo_path = os.path.join(os.path.dirname(__file__), "android-chrome-512x512.png")
-    if os.path.exists(logo_path):
-        try:
-            st.image(logo_path, width=100)
-        except Exception as e:
-            # If image fails to load, show emoji as fallback
-            st.markdown("# ✈️")
-    else:
-        # If image doesn't exist, show emoji as fallback
-        st.markdown("# ✈️")
-with logo_col2:
-    st.markdown("## " + t("page_title"))
-    st.markdown("##### AI-powered travel assistant for India")
-
 # ------------------------------------------
 # Translation dictionary and helper functions
 # ------------------------------------------
@@ -224,6 +206,24 @@ translations = {
 
 def t(key):
     return translations["en"].get(key, key)
+
+# Add logo to the header
+logo_col1, logo_col2 = st.columns([1, 4])
+with logo_col1:
+    # Check if logo file exists before trying to load it
+    logo_path = os.path.join(os.path.dirname(__file__), "android-chrome-512x512.png")
+    if os.path.exists(logo_path):
+        try:
+            st.image(logo_path, width=100)
+        except Exception as e:
+            # If image fails to load, show emoji as fallback
+            st.markdown("# ✈️")
+    else:
+        # If image doesn't exist, show emoji as fallback
+        st.markdown("# ✈️")
+with logo_col2:
+    st.markdown("## " + t("page_title"))
+    st.markdown("##### AI-powered travel assistant for India")
 
 # ------------------------------------------
 # Initialize all session state variables
