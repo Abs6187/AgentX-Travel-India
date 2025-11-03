@@ -741,14 +741,17 @@ with st.sidebar:
             if st.session_state.get("mcp_connected", False):
                 st.info("MCP integration is active! You'll receive context-aware travel recommendations.")
     else:
-        st.markdown("### 🧠 Model Context Protocol (Installation Required)")
-        st.warning("""
-        To enable context-aware AI with the Model Context Protocol, please install:
-        ```
-        pip install mcp-python-sdk
-        ```
-        Then restart the application to access this feature.
-        """)
+        # Show collapsed expander for optional MCP feature
+        with st.expander("🧠 Model Context Protocol (Optional)", expanded=False):
+            st.caption("""
+            **Context-aware AI** - Enhance responses with Model Context Protocol
+
+            To enable this optional feature:
+            ```bash
+            pip install mcp-python-sdk
+            ```
+            Then restart the application.
+            """)
     
     # Add MongoDB and OpenAI integration section ONLY if the modules are available
     if MONGODB_AVAILABLE and OPENAI_AVAILABLE:
@@ -781,24 +784,24 @@ with st.sidebar:
                     initialize_mongodb_collection()
             else:
                 st.warning("Please provide an OpenAI API key for vector search functionality.")
-    elif not MONGODB_AVAILABLE:
-        st.markdown("### 🗺️ MongoDB Geo Search (Installation Required)")
-        st.warning("""
-        To enable geo-based attraction search, please install:
-        ```
-        pip install pymongo openai
-        ```
-        Then restart the application to access this feature.
-        """)
-    elif not OPENAI_AVAILABLE:
-        st.markdown("### 🗺️ MongoDB Geo Search (Installation Required)")
-        st.warning("""
-        To enable geo-based attraction search, please install:
-        ```
-        pip install openai
-        ```
-        Then restart the application to access this feature.
-        """)
+    else:
+        # Show collapsed expander for optional MongoDB feature
+        with st.expander("🗺️ MongoDB Geo Search (Optional)", expanded=False):
+            missing_packages = []
+            if not MONGODB_AVAILABLE:
+                missing_packages.append("pymongo")
+            if not OPENAI_AVAILABLE:
+                missing_packages.append("openai")
+
+            st.caption(f"""
+            **Location-based recommendations** - Find nearby attractions with MongoDB Atlas
+
+            To enable this optional feature:
+            ```bash
+            pip install {' '.join(missing_packages)}
+            ```
+            Then restart the application.
+            """)
     
     # About section
     st.markdown("### ℹ️ " + t("about"))
@@ -813,29 +816,6 @@ with st.sidebar:
         "Our AI system uses specialized agents for destination research, accommodations, "
         "transportation, activities, dining, and itinerary creation."
     )
-
-# Show notification for MCP if unavailable
-if not MCP_AVAILABLE:
-    # Add notification about optional MCP features
-    st.sidebar.markdown("""
-    <div style="padding: 10px; border-radius: 5px; margin-bottom: 10px; background-color: #f8f9fa; border-left: 3px solid #3366cc;">
-        <b>ℹ️ Optional Feature Unavailable</b><br>
-        Model Context Protocol integration is unavailable because the required packages are not installed.
-        <code>pip install mcp-python-sdk</code> to enable this feature.
-    </div>
-    """, unsafe_allow_html=True)
-
-# Don't check again - these variables are already defined at the top of the script
-# Just show a notification based on their values
-if not MONGODB_AVAILABLE or not OPENAI_AVAILABLE:
-    # Add notification at the top of the app about optional MongoDB features
-    st.sidebar.markdown("""
-    <div style="padding: 10px; border-radius: 5px; margin-bottom: 10px; background-color: #f8f9fa; border-left: 3px solid #046A38;">
-        <b>ℹ️ Optional Feature Unavailable</b><br>
-        MongoDB geo-based recommendations are unavailable because the required packages are not installed.
-        <code>pip install pymongo openai</code> to enable this feature.
-    </div>
-    """, unsafe_allow_html=True)
 
 # Add travel form
 st.markdown("## " + t("create_itinerary"))
