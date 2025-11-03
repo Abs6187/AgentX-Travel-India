@@ -70,6 +70,38 @@ class Task:
         self.context = context or []
 
 # -------------------------------------------------------------------------------
+# API Key Management
+# -------------------------------------------------------------------------------
+def get_api_keys():
+    """Get all available Gemini API keys from environment variables.
+
+    Returns:
+        list: List of API keys found in environment variables.
+    """
+    api_keys = []
+
+    # Check for GEMINI_API_KEY_1 and GEMINI_API_KEY_2
+    key1 = os.getenv("GEMINI_API_KEY_1")
+    key2 = os.getenv("GEMINI_API_KEY_2")
+
+    if key1:
+        api_keys.append(key1)
+        logging.info("Found GEMINI_API_KEY_1")
+
+    if key2:
+        api_keys.append(key2)
+        logging.info("Found GEMINI_API_KEY_2")
+
+    # Fall back to GEMINI_API_KEY if no numbered keys found
+    if not api_keys:
+        fallback_key = os.getenv("GEMINI_API_KEY")
+        if fallback_key:
+            api_keys.append(fallback_key)
+            logging.info("Using fallback GEMINI_API_KEY")
+
+    return api_keys
+
+# -------------------------------------------------------------------------------
 # Initialize LLM
 # -------------------------------------------------------------------------------
 def initialize_llm(api_key=None):
@@ -100,7 +132,7 @@ def initialize_llm(api_key=None):
     try:
         # Attempt to initialize the LLM
         llm_instance = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash", 
+            model="gemini-2.5-flash",
             google_api_key=google_api_key,
             temperature=0.7,
             top_p=0.95,
@@ -347,67 +379,107 @@ Format should be scannable with clear headings, timing, and logistical details f
 def run_task(task: Task, input_text: str, api_key=None) -> str:
     """
     Run an agent task with the given input text and API key.
-    
+    Automatically switches between multiple API keys if rate limits are hit.
+
     Args:
         task: The Task to run
         input_text: User input text
         api_key: Optional Gemini API key to use
-        
+
     Returns:
         str: The generated response or error message
     """
-    # Check if we need to initialize or reinitialize the LLM
-    current_llm = initialize_llm(api_key)
-    if current_llm:
-        # Update the agent's LLM
-        task.agent.llm = current_llm
-    elif not task.agent.llm:
+    # Get all available API keys
+    available_api_keys = get_api_keys()
+
+    # If a specific API key is provided, use it first
+    if api_key:
+        api_keys_to_try = [api_key] + [k for k in available_api_keys if k != api_key]
+    else:
+        api_keys_to_try = available_api_keys
+
+    if not api_keys_to_try:
         logging.error("No valid API key provided")
-        return "⚠️ API Key Error: Please enter a valid Gemini API key in the settings to access AI features."
-    
+        return "⚠️ API Key Error: Please set GEMINI_API_KEY_1 or GEMINI_API_KEY_2 in environment variables to access AI features."
+
     # Prepare the system prompt
     system_prompt = f"""
     # Role: {task.agent.role}
     # Goal: {task.agent.goal}
     # Backstory: {task.agent.backstory}
-    
+
     Instructions for output:
     {task.expected_output}
     """
-    
+
     messages = [
         SystemMessage(content=system_prompt),
         HumanMessage(content=input_text)
     ]
-    
-    try:
-        # Start tracking time for possible timeout issues
-        start_time = datetime.now()
-        
-        # Make the API call with timeout handling
-        response = task.agent.llm.invoke(messages).content
-        
-        # Calculate response time for logging
-        response_time = (datetime.now() - start_time).total_seconds()
-        logging.info(f"Task '{task.description[:30]}...' completed in {response_time:.2f} seconds")
-        
-        return response
-    except Exception as e:
-        error_msg = str(e)
-        logging.error(f"Error running task: {error_msg}")
-        
-        # Create user-friendly error messages based on the exception
-        if "timeout" in error_msg.lower():
+
+    # Try each API key until one succeeds
+    last_error = None
+    for idx, current_api_key in enumerate(api_keys_to_try):
+        try:
+            # Initialize LLM with current API key
+            current_llm = initialize_llm(current_api_key)
+            if not current_llm:
+                continue
+
+            # Update the agent's LLM
+            task.agent.llm = current_llm
+
+            # Start tracking time for possible timeout issues
+            start_time = datetime.now()
+
+            # Make the API call with timeout handling
+            response = task.agent.llm.invoke(messages).content
+
+            # Calculate response time for logging
+            response_time = (datetime.now() - start_time).total_seconds()
+            logging.info(f"Task '{task.description[:30]}...' completed in {response_time:.2f} seconds using API key #{idx+1}")
+
+            return response
+
+        except Exception as e:
+            error_msg = str(e)
+            last_error = error_msg
+
+            # Check if it's a rate limit error
+            if "429" in error_msg or "rate limit" in error_msg.lower() or "quota" in error_msg.lower():
+                logging.warning(f"Rate limit hit on API key #{idx+1}. Trying next API key...")
+
+                # If this is not the last API key, try the next one
+                if idx < len(api_keys_to_try) - 1:
+                    logging.info(f"Switching to API key #{idx+2}")
+                    continue
+                else:
+                    logging.error("All API keys have hit rate limits")
+                    return "⚠️ Rate limit exceeded on all API keys. Please try again in a few minutes."
+
+            # For non-rate-limit errors, log and try next key or return error
+            logging.error(f"Error running task with API key #{idx+1}: {error_msg}")
+
+            # For authentication errors, try next key
+            if "403" in error_msg or "401" in error_msg or "authentication" in error_msg.lower():
+                if idx < len(api_keys_to_try) - 1:
+                    logging.info(f"Authentication failed, trying API key #{idx+2}")
+                    continue
+                else:
+                    return "⚠️ API Key Error: All API keys appear to be invalid or expired. Please update them in environment variables."
+
+            # For other errors, try next key or return error
+            if idx < len(api_keys_to_try) - 1:
+                continue
+
+    # If we've exhausted all API keys, return a user-friendly error
+    if last_error:
+        if "timeout" in last_error.lower():
             return "⚠️ Request timed out. The service might be experiencing high traffic. Please try again later."
-        elif "429" in error_msg:
-            return "⚠️ Rate limit exceeded. Please try again in a few minutes."
-        elif "403" in error_msg or "401" in error_msg or "authentication" in error_msg.lower():
-            return "⚠️ API Key Error: Your API key appears to be invalid or has expired. Please update it in settings."
-        elif "quota" in error_msg.lower():
-            return "⚠️ API quota exceeded. Your Gemini API key has reached its usage limit."
         else:
-            # Generic error message for other types of errors
-            return f"⚠️ Error processing your request. Please try again or check your API key settings."
+            return f"⚠️ Error processing your request with all available API keys. Please try again or check your API key settings."
+
+    return "⚠️ Unable to complete the request. Please check your API keys."
 
 # -------------------------------------------------------------------------------
 # User Input Functions
