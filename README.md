@@ -157,7 +157,7 @@ The application follows a multi-agent architecture where specialized AI agents h
 
 ## 👥 Team Members
 
-This project was created by TechMatrix Solvers for IIITDMJ HackByte3.0 (April 4-6, 2024):
+This project was created by TechMatrix Solvers for IIITDMJ HackByte3.0 (April 4-6, 2025):
 
 - **Team Leader**: Abhay Gupta ([LinkedIn](https://www.linkedin.com/in/abhay-gupta-197b17264/))
 - Jay Kumar ([LinkedIn](https://www.linkedin.com/in/jay-kumar-jk/))
