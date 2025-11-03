@@ -242,7 +242,20 @@ def initialize_session_state():
         st.session_state.results = {}
         
     if "gemini_api_key" not in st.session_state:
-        st.session_state.gemini_api_key = ""
+        # Check for environment variables first
+        env_key_1 = os.getenv("GEMINI_API_KEY_1")
+        env_key_2 = os.getenv("GEMINI_API_KEY_2")
+        fallback_key = os.getenv("GEMINI_API_KEY")
+
+        # Use the first available key for session state
+        if env_key_1:
+            st.session_state.gemini_api_key = env_key_1
+        elif env_key_2:
+            st.session_state.gemini_api_key = env_key_2
+        elif fallback_key:
+            st.session_state.gemini_api_key = fallback_key
+        else:
+            st.session_state.gemini_api_key = ""
         
     if "tailvy_api_key" not in st.session_state:
         st.session_state.tailvy_api_key = ""
@@ -632,7 +645,7 @@ with st.sidebar:
         type="password",
         help=t("api_key_required")
     )
-    
+
     # Validate and save API key
     if api_key:
         if api_key.startswith("AI"):
@@ -640,6 +653,35 @@ with st.sidebar:
             st.success(t("api_key_updated"))
         else:
             st.error("Invalid API key. Gemini API keys start with 'AI'")
+
+    # Check which environment variables are set
+    env_key_1 = os.getenv("GEMINI_API_KEY_1")
+    env_key_2 = os.getenv("GEMINI_API_KEY_2")
+
+    # Show status of environment variables
+    if env_key_1 or env_key_2:
+        keys_detected = []
+        if env_key_1:
+            keys_detected.append("GEMINI_API_KEY_1 ✅")
+        if env_key_2:
+            keys_detected.append("GEMINI_API_KEY_2 ✅")
+
+        st.success(f"**API Keys Detected:**\n" + "\n".join([f"- {key}" for key in keys_detected]))
+
+        if env_key_1 and env_key_2:
+            st.info("🔄 Automatic API key rotation is enabled! The system will switch between keys if rate limits are hit.")
+    else:
+        st.info("""
+    💡 **Multiple API Keys Support**
+
+    To avoid rate limits, you can set multiple API keys as environment variables:
+    - `GEMINI_API_KEY_1` - Primary API key
+    - `GEMINI_API_KEY_2` - Backup API key
+
+    The system will automatically switch to the backup key if the primary hits rate limits.
+        """)
+
+    st.caption("**Current Model:** gemini-2.5-flash")
     
     # Add Tailvy API Key input (optional)
     st.markdown("### 🧩 Tailvy API (Optional)")
